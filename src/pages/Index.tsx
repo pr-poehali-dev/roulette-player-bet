@@ -128,9 +128,12 @@ export default function Index() {
     setSpinning(true);
     setWinner(null);
     
-    if (spinAudioRef.current) {
-      spinAudioRef.current.currentTime = 0;
-      spinAudioRef.current.play().catch(() => {});
+    if (spinAudioRef.current && spinAudioRef.current.play) {
+      try {
+        spinAudioRef.current.play();
+      } catch (e) {
+        console.log('Audio play failed');
+      }
     }
 
     const totalBets = players.reduce((sum, p) => sum + p.bet, 0);
@@ -158,9 +161,12 @@ export default function Index() {
       setSpinning(false);
       setWinner(selectedPlayer);
       
-      if (winAudioRef.current) {
-        winAudioRef.current.currentTime = 0;
-        winAudioRef.current.play().catch(() => {});
+      if (winAudioRef.current && winAudioRef.current.play) {
+        try {
+          winAudioRef.current.play();
+        } catch (e) {
+          console.log('Audio play failed');
+        }
       }
 
       const newHistory: GameHistory = {
