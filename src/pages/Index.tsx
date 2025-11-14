@@ -38,8 +38,62 @@ export default function Index() {
   const winAudioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    spinAudioRef.current = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiP1/POfS0GKXzN8dyTRAwYbL3r7Z1RCQxNo+TzwXEjBjiR1/PM' );
-    winAudioRef.current = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjiP1/POfS0GKXzN8dyTRAwYbL3r7Z1RCQxNo+TzwXEjBjiR1/PM');
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    
+    const createSpinSound = () => {
+      const duration = 4;
+      const sampleRate = audioContext.sampleRate;
+      const buffer = audioContext.createBuffer(1, duration * sampleRate, sampleRate);
+      const data = buffer.getChannelData(0);
+      
+      for (let i = 0; i < buffer.length; i++) {
+        const t = i / sampleRate;
+        const freq = 100 + (t / duration) * 300;
+        const decay = Math.max(0, 1 - t / duration);
+        data[i] = Math.sin(2 * Math.PI * freq * t) * decay * 0.3;
+      }
+      
+      return buffer;
+    };
+    
+    const createWinSound = () => {
+      const duration = 1.5;
+      const sampleRate = audioContext.sampleRate;
+      const buffer = audioContext.createBuffer(1, duration * sampleRate, sampleRate);
+      const data = buffer.getChannelData(0);
+      
+      for (let i = 0; i < buffer.length; i++) {
+        const t = i / sampleRate;
+        const freq = 440 + Math.sin(t * 10) * 100;
+        const envelope = Math.exp(-t * 2);
+        data[i] = Math.sin(2 * Math.PI * freq * t) * envelope * 0.4;
+      }
+      
+      return buffer;
+    };
+    
+    const spinBuffer = createSpinSound();
+    const winBuffer = createWinSound();
+    
+    spinAudioRef.current = {
+      play: () => {
+        const source = audioContext.createBufferSource();
+        source.buffer = spinBuffer;
+        source.connect(audioContext.destination);
+        source.start(0);
+      },
+      currentTime: 0
+    } as any;
+    
+    winAudioRef.current = {
+      play: () => {
+        const source = audioContext.createBufferSource();
+        source.buffer = winBuffer;
+        source.connect(audioContext.destination);
+        source.start(0);
+      },
+      currentTime: 0
+    } as any;
   }, []);
 
   const addPlayer = () => {
